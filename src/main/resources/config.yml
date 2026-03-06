@@ -1,0 +1,52 @@
+# ============================================================
+#  RPG Spellcaster Configuration
+# ============================================================
+
+# --- Global Settings ---
+particles:
+  # Use async scheduling for particle calculations (recommended)
+  async: true
+  # Max particles per spell burst (safety cap)
+  max-per-burst: 500
+
+cooldowns:
+  # Cooldowns in seconds per spell
+  gravity_pull: 8
+  homing_missile: 5
+  wall_of_fire: 12
+  nova_blast: 10
+
+# --- Spell: Gravity Pull ---
+gravity_pull:
+  radius: 12.0 # Pull radius in blocks
+  force: 1.4 # Velocity multiplier toward caster
+  damage: 3.5 # Base magic damage (hearts)
+  particle-count: 80 # Spiral particles spawned
+  duration-ticks: 20 # How long the pull effect lasts
+
+# --- Spell: Homing Missile ---
+homing_missile:
+  tracking-range: 24.0 # Entity search radius for tracking
+  base-speed: 0.6 # Initial projectile speed
+  turn-speed: 0.18 # How sharply missile turns per tick
+  damage: 8.0 # Explosion damage on hit
+  blast-radius: 3.0 # AoE radius on hit
+  lifetime-ticks: 100 # Missile self-destructs after N ticks
+  trail-particle-count: 6
+
+# --- Spell: Wall of Fire ---
+wall_of_fire:
+  width: 8.0 # Wall width in blocks
+  height: 4.0 # Wall height in blocks
+  depth: 0.5 # Thickness (for hit detection)
+  damage-per-tick: 1.5 # Damage per 0.5s tick to entities in wall
+  duration-seconds: 6 # How long the wall lasts
+  particle-density: 5 # Particles per block of wall (higher = denser)
+
+# --- Spell: Nova Blast ---
+nova_blast:
+  radius: 8.0 # Blast radius in blocks
+  max-damage: 12.0 # Max damage at epicenter
+  knockback-force: 2.0 # Outward velocity multiplier
+  sphere-particle-count: 200
+  inner-ring-count: 60
