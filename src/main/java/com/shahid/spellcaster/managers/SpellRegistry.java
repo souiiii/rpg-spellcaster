@@ -5,10 +5,6 @@ import com.shahid.spellcaster.spells.*;
 
 import java.util.*;
 
-/**
- * Registry holding all available spells by name.
- * All spells are registered at plugin startup.
- */
 public class SpellRegistry {
 
     private final Map<String, Spell> spells = new LinkedHashMap<>();
@@ -28,16 +24,10 @@ public class SpellRegistry {
         spells.put(spell.getName().toLowerCase(), spell);
     }
 
-    /**
-     * @return The spell for the given name, or null if not found.
-     */
     public Spell getSpell(String name) {
         return name == null ? null : spells.get(name.toLowerCase());
     }
 
-    /**
-     * @return Unmodifiable view of all registered spells.
-     */
     public Collection<Spell> getAllSpells() {
         return Collections.unmodifiableCollection(spells.values());
     }

@@ -15,19 +15,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Wall of Fire Spell
- *
- * Casts a perpendicular wall of fire particles in front of the player.
- * Uses vector cross-product math to orient the wall correctly:
- *
- * look = caster.getEyeLocation().getDirection() (forward)
- * up = (0, 1, 0)
- * right = cross(look, up).normalize() (wall horizontal axis)
- * up-axis = cross(right, look).normalize() (wall vertical axis)
- *
- * The wall then damages entities whose location lies within the wall's AABB.
- */
 public class WallOfFireSpell implements Spell {
 
     private static final String NAME = "wall_of_fire";
@@ -59,22 +46,18 @@ public class WallOfFireSpell implements Spell {
         int durationSec = plugin.getConfig().getInt("wall_of_fire.duration-seconds", 6);
         int density = plugin.getConfig().getInt("wall_of_fire.particle-density", 5);
 
-        // ── Build wall orientation axes ───────────────────────────────────────
         Vector look = caster.getEyeLocation().getDirection().setY(0).normalize();
         Vector up = new Vector(0, 1, 0);
-        // right = look × up (perpendicular to both: the wall's horizontal axis)
+
         Vector right = look.clone().crossProduct(up).normalize();
-        // correctedUp = right × look (re-orthogonalize vertical axis)
+
         Vector wallUp = right.clone().crossProduct(look).normalize();
 
-        // Wall centre is 3 blocks in front of caster at eye height
         Location wallCentre = caster.getEyeLocation().add(look.multiply(3.0));
 
-        // ── Collect wall point grid for particle rendering ────────────────────
         List<Location> wallPoints = buildWallPoints(wallCentre, right, wallUp,
                 wallWidth, wallHeight, density);
 
-        // ── Particle animation task ───────────────────────────────────────────
         int totalTicks = durationSec * 20;
 
         new BukkitRunnable() {
@@ -87,13 +70,11 @@ public class WallOfFireSpell implements Spell {
                     return;
                 }
 
-                // Alternate between FLAME and LAVA for visual richness
                 Particle p = (tick % 6 < 3) ? Particle.FLAME : Particle.LAVA;
                 for (Location pt : wallPoints) {
                     wallCentre.getWorld().spawnParticle(p, pt, 1, 0.1, 0.1, 0.1, 0.01);
                 }
 
-                // ── Damage entities every 10 ticks (0.5s) ────────────────────
                 if (tick % 10 == 0) {
                     damageEntitiesInWall(wallCentre, right, wallUp,
                             wallWidth, wallHeight, depth, damagePerTick, caster);
@@ -102,13 +83,10 @@ public class WallOfFireSpell implements Spell {
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
-        // Sound + feedback
         origin.getWorld().playSound(origin, Sound.ITEM_FLINTANDSTEEL_USE, 1.0f, 0.8f);
         origin.getWorld().playSound(origin, Sound.BLOCK_FIRE_AMBIENT, 1.0f, 1.0f);
         caster.sendActionBar(Component.text("✦ Wall of Fire! (" + durationSec + "s)", NamedTextColor.GOLD));
     }
-
-    // ── Helper: build particle grid ───────────────────────────────────────────
 
     private List<Location> buildWallPoints(Location centre, Vector right, Vector up,
             double width, double height, int density) {
@@ -127,8 +105,6 @@ public class WallOfFireSpell implements Spell {
         return points;
     }
 
-    // ── Helper: damage entities overlapping wall AABB ─────────────────────────
-
     private void damageEntitiesInWall(Location centre, Vector right, Vector up,
             double width, double height, double depth,
             double damage, Player shooter) {
@@ -146,7 +122,6 @@ public class WallOfFireSpell implements Spell {
 
             Vector diff = entity.getLocation().toVector().subtract(centre.toVector());
 
-            // Project onto wall axes
             double projRight = Math.abs(diff.dot(right));
             double projUp = diff.dot(up);
             double projDepth = Math.abs(diff.dot(centre.getDirection() != null
@@ -155,7 +130,7 @@ public class WallOfFireSpell implements Spell {
 
             if (projRight <= halfW && projUp >= 0 && projUp <= height && projDepth <= halfD + 0.5) {
                 le.damage(damage, shooter);
-                le.setFireTicks(30); // 1.5 seconds on fire
+                le.setFireTicks(30);
             }
         }
     }

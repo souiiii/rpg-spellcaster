@@ -14,12 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * /wand <spell> [tier]
- *
- * Gives the executor a wand item for the specified spell.
- * Tier defaults to 1 if not specified; valid range 1-3.
- */
 public class WandCommand implements CommandExecutor, TabCompleter {
 
     private final SpellcasterPlugin plugin;
@@ -45,7 +39,6 @@ public class WandCommand implements CommandExecutor, TabCompleter {
 
         String spellName = args[0].toLowerCase();
 
-        // Validate spell exists
         if (plugin.getSpellRegistry().getSpell(spellName) == null) {
             player.sendMessage(Component.text("✘ Unknown spell: §e" + spellName, NamedTextColor.RED));
             player.sendMessage(Component.text("Available: " + plugin.getSpellRegistry().getSpellNames(),
@@ -53,19 +46,17 @@ public class WandCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Parse tier
         int tier = 1;
         if (args.length >= 2) {
             try {
                 tier = Integer.parseInt(args[1]);
-                tier = Math.max(1, Math.min(3, tier)); // Clamp 1-3
+                tier = Math.max(1, Math.min(3, tier));
             } catch (NumberFormatException e) {
                 player.sendMessage(Component.text("✘ Tier must be a number (1-3).", NamedTextColor.RED));
                 return true;
             }
         }
 
-        // Create and give wand
         ItemStack wand = plugin.getWandManager().createWand(spellName, tier);
         player.getInventory().addItem(wand);
         player.sendMessage(Component.text("✦ You received a ", NamedTextColor.GREEN)

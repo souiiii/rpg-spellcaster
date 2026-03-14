@@ -12,17 +12,6 @@ import org.bukkit.util.Vector;
 import java.util.Collection;
 import java.util.UUID;
 
-/**
- * Homing Missile Spell
- *
- * Launches a tracking Snowball projectile that seeks the nearest entity.
- * Every tick, its velocity is recalculated: v = normalize(target - missile) *
- * speed
- * Produces a blazing particle trail and detonates on impact.
- *
- * TaggedKey: "homing_missile" stored in entity's metadata for listener
- * detection.
- */
 public class HomingMissileSpell implements Spell {
 
     private static final String NAME = "homing_missile";
@@ -54,7 +43,6 @@ public class HomingMissileSpell implements Spell {
         int lifetime = plugin.getConfig().getInt("homing_missile.lifetime-ticks", 100);
         int trailCount = plugin.getConfig().getInt("homing_missile.trail-particle-count", 6);
 
-        // ── Spawn the Snowball missile ──────────────────────────────────────
         Location spawnLoc = caster.getEyeLocation();
         Vector direction = caster.getEyeLocation().getDirection().normalize().multiply(baseSpeed);
         Snowball missile = caster.getWorld().spawn(spawnLoc, Snowball.class, sb -> {
@@ -64,25 +52,22 @@ public class HomingMissileSpell implements Spell {
                     new org.bukkit.metadata.FixedMetadataValue(plugin, caster.getUniqueId().toString()));
         });
 
-        // ── Glow ─────────────────────────────────────────────────────────────
         missile.setGlowing(true);
 
         UUID missileId = missile.getUniqueId();
 
-        // ── Homing tracking task ──────────────────────────────────────────────
         new BukkitRunnable() {
             int tick = 0;
 
             @Override
             public void run() {
-                // Safety checks
+
                 Entity m = plugin.getServer().getEntity(missileId);
                 if (m == null || m.isDead() || !m.isValid() || tick >= lifetime) {
                     cancel();
                     return;
                 }
 
-                // ── Find nearest living entity ────────────────────────────────
                 Collection<Entity> nearby = m.getWorld()
                         .getNearbyEntities(m.getLocation(), trackingRange, trackingRange, trackingRange);
 
@@ -101,21 +86,19 @@ public class HomingMissileSpell implements Spell {
                     }
                 }
 
-                // ── Steer toward target ───────────────────────────────────────
                 if (target != null) {
                     Vector toTarget = target.getLocation().add(0, 0.9, 0).toVector()
                             .subtract(m.getLocation().toVector())
                             .normalize();
                     Vector currentVel = m.getVelocity();
-                    // Gradually blend current direction toward target direction
+
                     Vector newVel = currentVel.multiply(1 - turnSpeed)
                             .add(toTarget.multiply(turnSpeed))
                             .normalize()
-                            .multiply(baseSpeed + 0.3); // Slightly accelerate
+                            .multiply(baseSpeed + 0.3);
                     m.setVelocity(newVel);
                 }
 
-                // ── Particle trail ────────────────────────────────────────────
                 Location mLoc = m.getLocation();
                 m.getWorld().spawnParticle(Particle.FLAME, mLoc, trailCount, 0.05, 0.05, 0.05, 0.01);
                 m.getWorld().spawnParticle(Particle.SMOKE_NORMAL, mLoc, 2, 0.02, 0.02, 0.02, 0.01);
@@ -124,26 +107,20 @@ public class HomingMissileSpell implements Spell {
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
-        // ── Feedback ─────────────────────────────────────────────────────────
         origin.getWorld().playSound(origin, Sound.ENTITY_BLAZE_SHOOT, 1.0f, 1.5f);
         caster.sendActionBar(Component.text("✦ Homing Missile fired!", NamedTextColor.RED));
     }
 
-    /**
-     * Detonation effect — called from ProjectileHitListener.
-     */
     public void detonate(Location loc, Player shooter) {
         double damage = plugin.getConfig().getDouble("homing_missile.damage", 8.0);
         double blastRadius = plugin.getConfig().getDouble("homing_missile.blast-radius", 3.0);
 
-        // ── Sphere burst ──────────────────────────────────────────────────────
         particles.drawSphere(loc, blastRadius, 80, Particle.EXPLOSION_LARGE);
         particles.drawRing(loc, 0.2, blastRadius, 50, Particle.FLAME);
 
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.8f);
         loc.getWorld().playSound(loc, Sound.ENTITY_BLAZE_DEATH, 1.0f, 0.5f);
 
-        // ── AoE damage ────────────────────────────────────────────────────────
         Collection<Entity> nearby = loc.getWorld().getNearbyEntities(loc, blastRadius, blastRadius, blastRadius);
         for (Entity e : nearby) {
             if (!(e instanceof LivingEntity le))

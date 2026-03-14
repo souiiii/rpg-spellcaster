@@ -14,11 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * /spellcaster <list|reload>
- *
- * Admin utility command. Lists registered spells or reloads config.
- */
 public class SpellcasterCommand implements CommandExecutor, TabCompleter {
 
     private final SpellcasterPlugin plugin;

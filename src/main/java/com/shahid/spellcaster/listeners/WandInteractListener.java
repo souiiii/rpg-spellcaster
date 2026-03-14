@@ -15,10 +15,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Listens for right-click events and triggers spell casts when the player
- * holds a recognised wand item.
- */
 public class WandInteractListener implements Listener {
 
     private final SpellcasterPlugin plugin;
@@ -33,7 +29,7 @@ public class WandInteractListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        // Only handle right-click (air or block) in the main hand
+
         if (event.getHand() != EquipmentSlot.HAND)
             return;
         Action action = event.getAction();
@@ -43,20 +39,16 @@ public class WandInteractListener implements Listener {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        // Is this a wand?
         if (!wandManager.isWand(item))
             return;
 
-        // Cancel default block interaction when right-clicking a block
         event.setCancelled(true);
 
-        // Check cast permission
         if (!player.hasPermission("spellcaster.cast")) {
             player.sendMessage(Component.text("✘ You don't have permission to cast spells!", NamedTextColor.RED));
             return;
         }
 
-        // Look up spell
         String spellName = wandManager.getSpellName(item);
         Spell spell = plugin.getSpellRegistry().getSpell(spellName);
 
@@ -65,7 +57,6 @@ public class WandInteractListener implements Listener {
             return;
         }
 
-        // ── Cooldown check ────────────────────────────────────────────────────
         double cooldownSec = plugin.getConfig().getDouble("cooldowns." + spellName,
                 plugin.getConfig().getDouble("cooldowns.default", 5.0));
 
@@ -76,7 +67,6 @@ public class WandInteractListener implements Listener {
             return;
         }
 
-        // ── Cast! ─────────────────────────────────────────────────────────────
         spell.cast(player, player.getLocation());
         cooldownManager.setCooldown(player.getUniqueId(), spellName, cooldownSec);
     }

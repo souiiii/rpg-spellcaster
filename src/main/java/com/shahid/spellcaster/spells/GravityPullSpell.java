@@ -13,16 +13,6 @@ import org.bukkit.util.Vector;
 
 import java.util.Collection;
 
-/**
- * Gravity Pull Spell
- *
- * Pulls all nearby living entities toward the caster using vector mathematics.
- * Visual: a converging spiral of PORTAL particles rushing inward.
- *
- * Vector Math:
- * velocity = normalize(casterPos - entityPos) * force
- * damage = baseDamage * (1 - distance / radius) [closer = more damage]
- */
 public class GravityPullSpell implements Spell {
 
     private static final String NAME = "gravity_pull";
@@ -53,14 +43,11 @@ public class GravityPullSpell implements Spell {
         int partCount = plugin.getConfig().getInt("gravity_pull.particle-count", 80);
         int durationTick = plugin.getConfig().getInt("gravity_pull.duration-ticks", 20);
 
-        // ── Sound effect ─────────────────────────────────────────────────────
         origin.getWorld().playSound(origin, Sound.BLOCK_BEACON_ACTIVATE, 1.2f, 0.5f);
         origin.getWorld().playSound(origin, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 0.7f);
 
-        // ── Expanding ring at feet ────────────────────────────────────────────
         particles.animateExpandingRing(origin, radius, 15, Particle.PORTAL);
 
-        // ── Pull task ─────────────────────────────────────────────────────────
         new BukkitRunnable() {
             int tick = 0;
 
@@ -80,17 +67,14 @@ public class GravityPullSpell implements Spell {
                     if (entity.equals(caster))
                         continue;
 
-                    // ── Vector: direction from entity → caster ────────────────
                     Vector towardCaster = origin.toVector()
                             .subtract(living.getLocation().toVector())
                             .normalize()
                             .multiply(force);
 
-                    // Apply a slight upward component to arc nicely
                     towardCaster.setY(towardCaster.getY() + 0.3);
                     living.setVelocity(towardCaster);
 
-                    // ── Particle spiral on every 3rd tick ────────────────────
                     if (tick % 3 == 0) {
                         particles.drawSpiral(living.getLocation(), 1, 1.0,
                                 partCount / 4, Particle.ENCHANTMENT_TABLE);
@@ -101,7 +85,6 @@ public class GravityPullSpell implements Spell {
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
-        // ── Damage on last tick ───────────────────────────────────────────────
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -120,13 +103,11 @@ public class GravityPullSpell implements Spell {
                         living.damage(Math.max(damage, 0.5), caster);
                 }
 
-                // ── Implosion burst at centre ─────────────────────────────────
                 particles.drawSphere(origin, 2.0, 60, Particle.SPELL_WITCH);
                 origin.getWorld().playSound(origin, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 0.3f);
             }
         }.runTaskLater(plugin, durationTick + 1L);
 
-        // ── Feedback to caster ─────────────────────────────────────────────────
         caster.sendActionBar(Component.text("✦ Gravity Pull!", NamedTextColor.LIGHT_PURPLE));
     }
 }

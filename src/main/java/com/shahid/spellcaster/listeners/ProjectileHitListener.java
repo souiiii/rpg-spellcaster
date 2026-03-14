@@ -12,10 +12,6 @@ import org.bukkit.metadata.MetadataValue;
 
 import java.util.List;
 
-/**
- * Listener for projectile impact events.
- * Triggers detonation when a Homing Missile (tagged Snowball) hits something.
- */
 public class ProjectileHitListener implements Listener {
 
     private final SpellcasterPlugin plugin;
@@ -28,13 +24,11 @@ public class ProjectileHitListener implements Listener {
     public void onProjectileHit(ProjectileHitEvent event) {
         Projectile proj = event.getEntity();
 
-        // Only care about Snowballs with our homing missile metadata
         if (!(proj instanceof Snowball snowball))
             return;
         if (!snowball.hasMetadata(HomingMissileSpell.METADATA_KEY))
             return;
 
-        // ── Look up the original shooter ───────────────────────────────────────
         List<MetadataValue> meta = snowball.getMetadata(HomingMissileSpell.METADATA_KEY);
         Player shooter = null;
         if (!meta.isEmpty()) {
@@ -45,14 +39,12 @@ public class ProjectileHitListener implements Listener {
             }
         }
 
-        // ── Trigger detonation ────────────────────────────────────────────────
         HomingMissileSpell missileSpell = (HomingMissileSpell) plugin.getSpellRegistry().getSpell("homing_missile");
 
         if (missileSpell != null) {
             missileSpell.detonate(snowball.getLocation(), shooter);
         }
 
-        // Remove the projectile entity
         snowball.remove();
     }
 }

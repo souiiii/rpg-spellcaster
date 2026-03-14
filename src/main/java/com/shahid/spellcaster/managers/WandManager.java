@@ -16,13 +16,8 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Manages creation and identification of custom wand items.
- * Uses PersistentDataContainer (PDC) to store spell metadata on the item.
- */
 public class WandManager {
 
-    // PDC keys
     private final NamespacedKey keyWandId;
     private final NamespacedKey keySpellName;
     private final NamespacedKey keyWandTier;
@@ -36,17 +31,11 @@ public class WandManager {
         this.keyWandTier = new NamespacedKey(plugin, "wand_tier");
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
-
-    /**
-     * Create a custom wand ItemStack for the given spell and tier (1-3).
-     */
     public ItemStack createWand(String spellName, int tier) {
         Material mat = tierMaterial(tier);
         ItemStack wand = new ItemStack(mat);
         ItemMeta meta = wand.getItemMeta();
 
-        // ── Display Name ──────────────────────────────────────────────────────
         String displaySpell = formatSpellName(spellName);
         Component name = Component.text("✦ ", NamedTextColor.YELLOW)
                 .append(Component.text(displaySpell + " Wand", tierColor(tier))
@@ -54,7 +43,6 @@ public class WandManager {
                         .decoration(TextDecoration.ITALIC, false));
         meta.displayName(name);
 
-        // ── Lore ──────────────────────────────────────────────────────────────
         meta.lore(List.of(
                 Component.empty(),
                 Component.text("  Spell: ", NamedTextColor.GRAY)
@@ -69,11 +57,9 @@ public class WandManager {
                 Component.text("  Right-click to cast!", NamedTextColor.GOLD)
                         .decoration(TextDecoration.ITALIC, true)));
 
-        // ── Enchant glow (hidden) ─────────────────────────────────────────────
         meta.addEnchant(Enchantment.DURABILITY, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
 
-        // ── PDC data ──────────────────────────────────────────────────────────
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         pdc.set(keyWandId, PersistentDataType.STRING, UUID.randomUUID().toString());
         pdc.set(keySpellName, PersistentDataType.STRING, spellName.toLowerCase());
@@ -83,9 +69,6 @@ public class WandManager {
         return wand;
     }
 
-    /**
-     * @return true if the item is a plugin wand (has our PDC tag)
-     */
     public boolean isWand(ItemStack item) {
         if (item == null || !item.hasItemMeta())
             return false;
@@ -93,9 +76,6 @@ public class WandManager {
         return pdc.has(keyWandId, PersistentDataType.STRING);
     }
 
-    /**
-     * @return The spell name stored in PDC, or null if not a wand.
-     */
     public String getSpellName(ItemStack item) {
         if (!isWand(item))
             return null;
@@ -103,9 +83,6 @@ public class WandManager {
         return pdc.get(keySpellName, PersistentDataType.STRING);
     }
 
-    /**
-     * @return The tier (1-3) stored in PDC, or 1 as default.
-     */
     public int getWandTier(ItemStack item) {
         if (!isWand(item))
             return 1;
@@ -113,8 +90,6 @@ public class WandManager {
         Integer tier = pdc.get(keyWandTier, PersistentDataType.INTEGER);
         return tier != null ? tier : 1;
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Material tierMaterial(int tier) {
         return switch (tier) {
